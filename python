@@ -32,3 +32,43 @@ def create_llm_dataset(input_folder, output_csv):
 input_folder = 'path_to_your_python_files'
 output_csv = 'llm_dataset.csv'
 create_llm_dataset(input_folder, output_csv)
+
+
+import os
+import csv
+
+# Function to read the content of a SAS file and preprocess it
+def read_and_preprocess_sas_file(file_path):
+    with open(file_path, 'r') as file:
+        content = file.read()
+    # Preprocessing the content for LLM fine-tuning
+    # Replace newline, space, and tab characters with placeholders
+    # Ensure the placeholders chosen do not conflict with SAS syntax
+    preprocessed_content = content.replace('\n', '%n').replace(' ', '%s').replace('\t', '%t')
+    
+    # Handle any specific SAS elements that need special attention
+    # You might want to keep or escape certain characters, strings, or blocks intact
+    return preprocessed_content
+
+# Function to create a dataset from a directory of SAS files
+def create_llm_dataset_from_sas(input_folder, output_csv):
+    data = []
+    
+    # Traverse through all the files in the input folder
+    for root, _, files in os.walk(input_folder):
+        for file in files:
+            if file.endswith('.sas'):  # Only process SAS files
+                file_path = os.path.join(root, file)
+                preprocessed_content = read_and_preprocess_sas_file(file_path)
+                data.append([file, preprocessed_content])
+
+    # Write the data to a CSV file
+    with open(output_csv, 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['filename', 'content'])
+        writer.writerows(data)
+
+# Example usage
+input_folder = 'path_to_your_sas_files'
+output_csv = 'llm_sas_dataset.csv'
+create_llm_dataset_from_sas(input_folder, output_csv)
