@@ -72,3 +72,63 @@ def create_llm_dataset_from_sas(input_folder, output_csv):
 input_folder = 'path_to_your_sas_files'
 output_csv = 'llm_sas_dataset.csv'
 create_llm_dataset_from_sas(input_folder, output_csv)
+
+
+
+
+
+
+
+
+
+
+
+import os
+import csv
+
+# Function to read and preprocess a file (SAS or Python)
+def read_and_preprocess_file(file_path, is_sas=False):
+    with open(file_path, 'r') as file:
+        content = file.read()
+    # Preprocess the content for LLM fine-tuning
+    preprocessed_content = content.replace('\n', '%n').replace(' ', '%s').replace('\t', '%t')
+    
+    # For SAS, semicolons are already part of the syntax, so no need to modify them
+    if is_sas:
+        return preprocessed_content
+    # For Python, if you want to add semicolons, uncomment the following line
+    # preprocessed_content = preprocessed_content.replace('%n', ';%n')
+    
+    return preprocessed_content
+
+# Function to create a combined dataset from directories of SAS and Python files
+def create_combined_llm_dataset(sas_folder, python_folder, output_csv):
+    data = []
+    
+    # Get the list of SAS files and Python files
+    sas_files = sorted([f for f in os.listdir(sas_folder) if f.endswith('.sas')])
+    python_files = sorted([f for f in os.listdir(python_folder) if f.endswith('.py')])
+    
+    # Ensure that we are pairing the files correctly
+    min_length = min(len(sas_files), len(python_files))
+    
+    for i in range(min_length):
+        sas_file_path = os.path.join(sas_folder, sas_files[i])
+        python_file_path = os.path.join(python_folder, python_files[i])
+        
+        sas_content = read_and_preprocess_file(sas_file_path, is_sas=True)
+        python_content = read_and_preprocess_file(python_file_path, is_sas=False)
+        
+        data.append([sas_files[i], sas_content, python_files[i], python_content])
+    
+    # Write the combined data to a CSV file
+    with open(output_csv, 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['sas_filename', 'sas_content', 'python_filename', 'python_content'])
+        writer.writerows(data)
+
+# Example usage
+sas_folder = 'path_to_your_sas_files'
+python_folder = 'path_to_your_python_files'
+output_csv = 'combined_llm_dataset.csv'
+create_combined_llm_dataset(sas_folder, python_folder, output_csv)
